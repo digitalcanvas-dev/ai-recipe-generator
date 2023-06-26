@@ -6,4 +6,6 @@ Built on the Remix [Indie Stacks](https://github.com/remix-run/indie-stack) but 
 
 To avoid GPT API charges, this is not deployed anywhere.
 
+This is a proof-of-concept, please ignore any messy code you might find (or open a pull request!).
+
 ![screenshot](./public/recipe-gen.png)
