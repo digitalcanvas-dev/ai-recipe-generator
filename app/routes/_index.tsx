@@ -1,5 +1,10 @@
-import type { KeyboardEvent, MouseEvent } from 'react';
-import { CSSProperties, PropsWithChildren, useRef, useState } from 'react';
+import type {
+  KeyboardEvent,
+  MouseEvent,
+  CSSProperties,
+  PropsWithChildren,
+} from 'react';
+import { useRef, useState } from 'react';
 import type { ActionArgs, V2_MetaFunction } from '@remix-run/node';
 import { Form, useActionData, useNavigation } from '@remix-run/react';
 import type { CreateChatCompletionRequest } from 'openai';
@@ -169,7 +174,7 @@ const ThingList = ({
             </li>
           ))
         ) : (
-          <li>No ingredients added</li>
+          <li>No {title.toLowerCase()} added</li>
         )}
       </ul>
     </div>
@@ -196,25 +201,23 @@ export default function Index() {
   const isThinking =
     navigation.state === 'loading' || navigation.state == 'submitting';
 
-  const addIngredient = (inputEl: HTMLInputElement) => {
-    const ingredient = inputEl.value;
-    // @ts-ignore
-    setIngredients((currentItems) => {
-      return !ingredient || currentItems.has(ingredient)
-        ? currentItems
-        : new Set([...currentItems, ingredient]);
-    });
-    inputEl['value'] = '';
-    inputEl.focus();
-  };
+  const addThing = (
+    type: 'ingredient' | 'equipment',
+    inputEl: HTMLInputElement | null
+  ) => {
+    if (!inputEl) {
+      return;
+    }
 
-  const addEquipment = (inputEl: HTMLInputElement) => {
-    const equipName = inputEl.value;
-    setEquipment((currentEqpt) => {
-      return !equipName || currentEqpt.has(equipName)
-        ? currentEqpt
-        : new Set([...currentEqpt, equipName]);
+    const setter = type === 'ingredient' ? setIngredients : setEquipment;
+
+    const thing = inputEl.value;
+    setter((currentItems) => {
+      return !thing || currentItems.has(thing)
+        ? currentItems
+        : new Set([...currentItems, thing]);
     });
+
     inputEl['value'] = '';
     inputEl.focus();
   };
@@ -224,31 +227,22 @@ export default function Index() {
       if (e.key !== 'Enter') {
         return;
       }
+      // prevent submitting the entire form.
       e.stopPropagation();
       e.preventDefault();
-      if (type === 'ingredient' && itemFieldRef.current) {
-        addIngredient(itemFieldRef.current);
-        return;
-      }
-
-      if (type === 'equipment' && equipFieldRef.current) {
-        addEquipment(equipFieldRef.current);
-        return;
-      }
+      addThing(
+        type,
+        type === 'ingredient' ? itemFieldRef.current : equipFieldRef.current
+      );
     };
 
   const handleClick =
     (type: 'ingredient' | 'equipment') =>
     (e: MouseEvent<HTMLButtonElement>) => {
-      if (type === 'ingredient' && itemFieldRef.current) {
-        addIngredient(itemFieldRef.current);
-        return;
-      }
-
-      if (type === 'equipment' && equipFieldRef.current) {
-        addEquipment(equipFieldRef.current);
-        return;
-      }
+      addThing(
+        type,
+        type === 'ingredient' ? itemFieldRef.current : equipFieldRef.current
+      );
     };
 
   const handleToggleCommonThings =
@@ -287,6 +281,7 @@ export default function Index() {
     });
   };
 
+  // about 150-line component returned; can be cleaned up and split into multiple components.
   return (
     <main className="p-20">
       <section className="mx-auto max-w-screen-md rounded-3xl border border-gray-200 bg-white px-14 py-10 text-gray-800">
@@ -426,11 +421,11 @@ export default function Index() {
             {isThinking ? <IconLoader2 className="animate-spin" /> : 'Generate'}
           </button>
         </Form>
-        <section className="">
+        <section>
           <pre
             className="mt-8"
             style={{
-              // not full supported, yet
+              // not fully supported, yet
               // @ts-ignore
               textWrap: 'balance',
             }}
