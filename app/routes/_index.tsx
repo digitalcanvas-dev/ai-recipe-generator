@@ -7,9 +7,10 @@ import type {
 import { useRef, useState } from 'react';
 import type { ActionArgs, V2_MetaFunction } from '@remix-run/node';
 import { Form, useActionData, useNavigation } from '@remix-run/react';
-import type { CreateChatCompletionRequest } from 'openai';
-import { Configuration, OpenAIApi } from 'openai';
+import OpenAI from 'openai';
 import { IconLoader2, IconX } from '@tabler/icons-react';
+import { CompletionCreateParams } from 'openai/resources';
+import CreateCompletionRequestNonStreaming = CompletionCreateParams.CreateCompletionRequestNonStreaming;
 
 const TITLE = 'EpicurAIn';
 
@@ -48,10 +49,7 @@ const generateRequest = ({
 
   return `Try to create a recipe with only these available ingredients: ${ingredientsList}.
   And available equipment: ${equipmentList}.
-  This is for a ${meal} for ${peopleStrings}.
-  Not all ingredients or equipment need to be used. Do not assume I have other equipment or that I have any other ingredients.
-  If there's no viable recipe, such as the ingredients list doesn't include any protein,
-  do not assume I have other ingredients or equipment and tell me that there's no recipe.`;
+  This is for a ${meal} for ${peopleStrings}.`;
 };
 
 export const action = async ({ request }: ActionArgs) => {
@@ -79,12 +77,9 @@ export const action = async ({ request }: ActionArgs) => {
     meal,
   };
 
-  const configuration = new Configuration({
+  const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
-    organization: process.env.OPENAI_API_ORG,
   });
-
-  const openai = new OpenAIApi(configuration);
 
   const aiRequest = generateRequest(params);
 
@@ -92,22 +87,29 @@ export const action = async ({ request }: ActionArgs) => {
     console.log(aiRequest);
   }
 
-  const completionRequest: CreateChatCompletionRequest = {
-    model: 'gpt-3.5-turbo',
-    messages: [
+  const completionRequest: CreateCompletionRequestNonStreaming = {
+    model: 'gpt-3.5-turbo-0613',
+    prompt: [
       {
         role: 'system',
         content: ROLE,
       },
-      { role: 'user', content: aiRequest },
+      {
+        role: 'user',
+        content: aiRequest,
+      },
     ],
   };
 
   try {
-    const chatCompletion = await openai.createChatCompletion(completionRequest);
+    const chatCompletion = await openai.completions.create(completionRequest);
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log(chatCompletion);
+    }
 
     return {
-      generatedOutput: chatCompletion.data.choices[0].message?.content ?? '',
+      generatedOutput: chatCompletion.choices[0].text ?? '',
     };
   } catch (e) {
     console.error(JSON.stringify(e));
@@ -426,6 +428,7 @@ export default function Index() {
             className="mt-8"
             style={{
               // not fully supported, yet
+              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
               // @ts-ignore
               textWrap: 'balance',
             }}
