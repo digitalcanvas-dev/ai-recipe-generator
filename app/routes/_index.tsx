@@ -9,8 +9,8 @@ import type { ActionArgs, V2_MetaFunction } from '@remix-run/node';
 import { Form, useActionData, useNavigation } from '@remix-run/react';
 import OpenAI from 'openai';
 import { IconLoader2, IconX } from '@tabler/icons-react';
-import { CompletionCreateParams } from 'openai/resources';
-import CreateCompletionRequestNonStreaming = CompletionCreateParams.CreateCompletionRequestNonStreaming;
+
+import CreateCompletionRequestNonStreaming = OpenAI.CompletionCreateParams.CreateCompletionRequestNonStreaming;
 
 const TITLE = 'EpicurAIn';
 
@@ -22,8 +22,10 @@ export const meta: V2_MetaFunction = () => [
 ];
 
 const COMMON_INGREDIENTS =
-  'Salt, Pepper, Olive oil, Butter, All-purpose flour, Sugar, Eggs, Milk, Garlic, Onion, Lemons, White Vinegar, Apple Cider Vinegar, Soy sauce, Baking powder, Cumin';
-const COMMON_EQUIPMENT = 'Stove top, Oven, Microwave';
+  'Salt, Pepper, Olive oil, Butter, All-purpose flour, Sugar, Garlic, Onion, White Vinegar, Apple Cider Vinegar, Soy sauce, Baking powder, Cumin, rice, oat milk, basil, shrimp, various spices, bell peppers, zucchinis';
+
+const COMMON_EQUIPMENT =
+  'Stove top, Oven, Microwave, air fryer, pressure cooker';
 
 const ROLE =
   "You are a trustworthy and experienced chef's assistant with an excellent grasp of cooking. You are also pragmatic and focus on dishes that are easy to assemble and use minimal ingredients.";
@@ -88,17 +90,8 @@ export const action = async ({ request }: ActionArgs) => {
   }
 
   const completionRequest: CreateCompletionRequestNonStreaming = {
-    model: 'gpt-3.5-turbo-0613',
-    prompt: [
-      {
-        role: 'system',
-        content: ROLE,
-      },
-      {
-        role: 'user',
-        content: aiRequest,
-      },
-    ],
+    model: 'gpt-4',
+    prompt: aiRequest,
   };
 
   try {
